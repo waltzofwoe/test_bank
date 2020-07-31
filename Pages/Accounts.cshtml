@@ -1,0 +1,196 @@
+﻿@page
+@model TestBank.Pages.AccountsModel
+@using TestBank.Models;
+
+@inject BankContext db
+@{
+    ViewData["Title"] = "Accounts";
+
+    var banks = db.Banks.OrderBy(arg => arg.Name)
+        .Select(arg => new SelectListItem(arg.Name, arg.Id.ToString()));
+
+    var accounts = Model.Accounts ?? Enumerable.Empty<Account>();
+}
+
+@if (Model.ErrorMessage != null)
+{
+    <p class="alert alert-danger">@Model.ErrorMessage</p>
+}
+
+@if (Model.SuccessMessage != null)
+{
+    <p class="alert alert-success">@Model.SuccessMessage</p>
+}
+
+<div class="modal" id="transaction">
+    <div class="modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="container" method="post">
+                    <div class="form-group">
+                        <label>Банк отправителя</label>
+                        <select id="bank_sender" class="form-control" asp-items="banks">
+                            <option disabled="disabled" selected="selected"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Счет отправителя</label>
+                        <select asp-for="SenderAccountId" class="form-control">
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Банк получателя</label>
+                        <select id="bank_receiver" class="form-control" asp-items="banks">
+                            <option disabled="disabled" selected="selected"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Счет получателя</label>
+                        <select asp-for="ReceiverAccountId" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Сумма</label>
+                        <input asp-for="Amount" class="form-control" />
+                    </div>
+                    <button class="btn btn-primary" type="submit" asp-page-handler="MakeTransaction">Отправить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.NeedConfirmation)
+{
+    <div class="modal" id="confirm">
+        <div class="modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form class="container" method="post">
+                        <input type="hidden" asp-for="SenderAccountId" />
+                        <input type="hidden" asp-for="ReceiverAccountId" />
+                        <input type="hidden" asp-for="Amount" />
+                        <div class="row">
+                            <div class="col font-weight-bold">Банк отправителя</div>
+                            <div class="col">@Model.Transaction.Sender.Bank.Name</div>
+                        </div>
+                        <div class="row">
+                            <div class="col font-weight-bold">Счет отправителя</div>
+                            <div class="col">@Model.Transaction.Sender.Id</div>
+                        </div>
+                        <div class="row">
+                            <div class="col font-weight-bold">Банк получателя</div>
+                            <div class="col">@Model.Transaction.Receiver.Bank.Name</div>
+                        </div>
+                        <div class="row">
+                            <div class="col font-weight-bold">Банк отправителя</div>
+                            <div class="col">@Model.Transaction.Receiver.Id</div>
+                        </div>
+                        <div class="row">
+                            <div class="col font-weight-bold">Сумма</div>
+                            <div class="col">@Model.Transaction.Amount</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <button class="btn btn-primary" type="submit" asp-page-handler="ConfirmTransaction">Отправить</button>
+                            </div>
+                            <div class="col">
+                                <button id="reject" class="btn btn-primary" type="button">Отменить</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+<h1>Accounts</h1>
+<p>Оператор - @User.Identity?.Name</p>
+<form method="get" class="mb-2">
+    <div class="form-row">
+        <div class="col-4">
+            <select class="form-control" asp-for="BankId" asp-items="banks"></select>
+        </div>
+        <div class="col-1">
+            <button type="submit" class="btn btn-primary">Выбор</button>
+        </div>
+    </div>
+</form>
+
+<div class="mt-3 mb-2">
+    <button class="btn btn-primary" data-toggle="modal" data-target="#transaction">Сформировать перевод</button>
+</div>
+
+<table class="table table-sm table-striped">
+    <thead>
+        <tr>
+            <th>Тип счета</th>
+            <th>ИД счета</th>
+            <th>Сумма</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var acc in accounts)
+        {
+            <tr>
+                <td>@acc.AccountType.Name</td>
+                <td>@acc.Id</td>
+                <td>@acc.Amount</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts
+{
+    <script>
+        let query = function (bankFldId, accountFldId) {
+            let bankId = $(bankFldId).val();
+
+            $.get('/Accounts?handler=AccountList&bankId=' + bankId)
+                .then(function (data) {
+                    $(accountFldId).children().remove();
+                    $(data).appendTo(accountFldId);
+                })
+                .fail(function (e) {
+                    console.error(e);
+                })
+        }
+
+        $("#bank_receiver").on('change', function () {
+            query("#bank_receiver", "#ReceiverAccountId");
+        })
+
+        $("#bank_sender").on('change', function () {
+            query("#bank_sender", "#SenderAccountId");
+        })
+
+
+
+    </script>
+
+    @if (Model.NeedConfirmation)
+    {
+        <script>
+            $('#confirm').modal('show');
+            $('#reject').on('click', function () {
+                $('#confirm').modal('hide');
+            })
+        </script>
+    }
+}
