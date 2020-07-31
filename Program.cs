@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TestBank.Models;
-using TestBank.Utils;
+using TestBank.Service;
 
 namespace TestBank
 {
@@ -36,10 +36,8 @@ namespace TestBank
 
                 try
                 {
-                    var context = services.GetRequiredService<BankContext>();
-                    var auth = services.GetRequiredService<AuthorizationService>();
-                    var dbInit = new DbInitializer(context, auth);
-                    dbInit.Init();
+                    var initializator = services.GetRequiredService<DbInitializer>();
+                    initializator.Init();
                 }
                 catch (Exception ex)
                 {

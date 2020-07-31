@@ -4,9 +4,8 @@ using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 using TestBank.Models;
-using TestBank.Service;
 
-namespace TestBank.Utils
+namespace TestBank.Service
 {
     public class DbInitializer
     {

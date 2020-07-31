@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TestBank.Models;
 using Microsoft.EntityFrameworkCore;
-using TestBank.Utils;
 using TestBank.Service;
 
 namespace TestBank.Pages

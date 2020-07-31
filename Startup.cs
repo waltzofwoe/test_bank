@@ -14,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TestBank.Models;
 using TestBank.Service;
-using TestBank.Utils;
 
 namespace TestBank
 {
@@ -64,6 +63,8 @@ namespace TestBank
                 return oper;
 
             });
+
+            services.AddTransient<DbInitializer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
