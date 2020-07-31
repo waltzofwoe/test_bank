@@ -20,6 +20,12 @@ namespace TestBank.Service
             this.db = db;
         }
 
+        /// <summary>
+        /// Запускает дополнительные действия для транзакции
+        /// </summary>
+        /// <param name="transaction">Транзакция</param>
+        /// <param name="before">Запускать действия, которые идут до транзакции</param>
+        /// <returns></returns>
         public OperationResult RunActions(Transaction transaction, bool before)
         {
             var sender = db.Accounts.FirstOrDefault(arg => arg.Id == transaction.SenderId);
