@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -38,6 +39,7 @@ namespace TestBank
             services.AddDbContext<BankContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("BankContext")));
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(arg=>arg.LoginPath= new Microsoft.AspNetCore.Http.PathString("/Login"));
+
             services.AddAuthorization();
             services.AddTransient<AuthorizationService>();
             services.AddTransient<ActionsService>();
@@ -48,6 +50,20 @@ namespace TestBank
             services.AddTransient<SendToPartnerAction>();
             services.AddTransient<ShowConfirmWindowAction>();
             services.AddTransient<SmsAction>();
+            services.AddHttpContextAccessor();
+            services.AddTransient<Operator>(services =>
+            {
+                var db = services.GetService<BankContext>();
+                var http = services.GetService<IHttpContextAccessor>();
+                var username = http.HttpContext.User.Identity.Name;
+                var oper = db.Operators
+                    .AsNoTracking()
+                    .FirstOrDefault(arg => arg.Login == username);
+                if (oper != null)
+                    oper.Password = null;
+                return oper;
+
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

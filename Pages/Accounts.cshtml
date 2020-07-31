@@ -26,13 +26,14 @@
     <div class="modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Modal title</h5>
+                <h5 class="modal-title">Перевод</h5>
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <form class="container" method="post">
+                    <input type="hidden" name="force" value="false" />
                     <div class="form-group">
                         <label>Банк отправителя</label>
                         <select id="bank_sender" class="form-control" asp-items="banks">
@@ -71,7 +72,7 @@
         <div class="modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Modal title</h5>
+                    <h5 class="modal-title">Подтверждение операции</h5>
                     <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -81,6 +82,7 @@
                         <input type="hidden" asp-for="SenderAccountId" />
                         <input type="hidden" asp-for="ReceiverAccountId" />
                         <input type="hidden" asp-for="Amount" />
+                        <input type="hidden" name="force" value="true" />
                         <div class="row">
                             <div class="col font-weight-bold">Банк отправителя</div>
                             <div class="col">@Model.Transaction.Sender.Bank.Name</div>
@@ -103,7 +105,7 @@
                         </div>
                         <div class="row">
                             <div class="col">
-                                <button class="btn btn-primary" type="submit" asp-page-handler="ConfirmTransaction">Отправить</button>
+                                <button class="btn btn-primary" type="submit" asp-page-handler="MakeTransaction">Отправить</button>
                             </div>
                             <div class="col">
                                 <button id="reject" class="btn btn-primary" type="button">Отменить</button>

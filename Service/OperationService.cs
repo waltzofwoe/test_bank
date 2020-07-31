@@ -14,14 +14,16 @@ namespace TestBank.Service
     {
         private BankContext db;
         private ActionsService actions;
+        private Operator @operator;
 
-        public OperationService(BankContext db, ActionsService actions)
+        public OperationService(BankContext db, ActionsService actions, Operator oper)
         {
             this.actions = actions;
             this.db = db;
+            this.@operator = oper;
         }
 
-        public TransactionResult MakeTransaction(Account sender, Account receiver, decimal amount, Operator oper, bool force)
+        public TransactionResult MakeTransaction(Account sender, Account receiver, decimal amount, bool force)
         {
             var transactionParameters = db.TransactionCommission
                 .FirstOrDefault(arg => arg.SenderTypeId == sender.AccountTypeId && arg.ReceiverTypeId == receiver.AccountTypeId);
@@ -35,7 +37,7 @@ namespace TestBank.Service
             {
                 SenderId = sender.Id,
                 ReceiverId = receiver.Id,
-                OperatorId = oper.Id,
+                OperatorId = @operator.Id,
                 Date = DateTime.Now,
                 Amount = amount,
                 BankCommission = amount * (0.01m * (sender.BankId == receiver.BankId ? bankParameters.InnerCommission : bankParameters.OuterCommission)),
@@ -76,8 +78,6 @@ namespace TestBank.Service
 
                 db.SaveChanges();
                 tr.Commit();
-
-                
 
                 actions.RunActions(transaction, false);
             }

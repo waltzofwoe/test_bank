@@ -58,11 +58,31 @@ namespace TestBank.Pages
                     .ToArray();
         }
 
-        public void OnPostMakeTransaction()
+        public void OnPostMakeTransaction(bool force)
         {
+            
             try
             {
-                var res = MakeTransaction(false);
+                var sender = db.Accounts.Include(k => k.Bank).FirstOrDefault(arg => arg.Id == SenderAccountId);
+                var receiver = db.Accounts.Include(k => k.Bank).FirstOrDefault(arg => arg.Id == ReceiverAccountId);
+                var oper = db.Operators.FirstOrDefault(arg => arg.Login == User.Identity.Name);
+
+                if (Amount <= 0 || sender == null || receiver == null || oper == null)
+                {
+                    ErrorMessage = "Указаны некорректные параметры";
+                    return;
+                }
+
+                BankId = sender.BankId;
+                LoadAccounts();
+
+                if (SenderAccountId == ReceiverAccountId)
+                {
+                    ErrorMessage = "Получатель и отправитель - один и тот же счет";
+                    return;
+                }
+
+                var res = operations.MakeTransaction(sender, receiver, Amount, force);
                 switch (res.Result)
                 {
                     case OperationResult.Success:
@@ -74,9 +94,6 @@ namespace TestBank.Pages
                     case OperationResult.InternalError:
                         ErrorMessage = "Внутренняя ошибка сервиса";
                         break;
-                    case OperationResult.IncorrectParameters:
-                        ErrorMessage = "Указаны некорректные параметры";
-                        break;
                     case OperationResult.NeedConfirmation:
                         Transaction = res.Transaction;
                         NeedConfirmation = true;
@@ -90,59 +107,6 @@ namespace TestBank.Pages
                 ErrorMessage = e.Message;
             }
             
-        }
-
-        public void OnPostConfirmTransaction()
-        {
-            try
-            {
-                var res = MakeTransaction(true);
-                switch (res.Result)
-                {
-                    case OperationResult.Success:
-                        break;
-                    case OperationResult.InsufficientFunds:
-                        ErrorMessage = "Недостаточно средств на счёте " + SenderAccountId.ToString();
-                        break; ;
-                    case OperationResult.InternalError:
-                        ErrorMessage = "Внутренняя ошибка сервиса";
-                        break;
-
-                    case OperationResult.IncorrectParameters:
-                        ErrorMessage = "Указаны некорректные параметры";
-                        break;
-                    case OperationResult.NeedConfirmation:
-                        Transaction = res.Transaction;
-                        NeedConfirmation = true;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch (Exception e)
-            {
-                ErrorMessage = e.Message;
-            }
-            
-        }
-
-        private TransactionResult MakeTransaction(bool force)
-        {
-            
-            var sender = db.Accounts.Include(k=>k.Bank).FirstOrDefault(arg => arg.Id == SenderAccountId);
-            var receiver = db.Accounts.Include(k => k.Bank).FirstOrDefault(arg => arg.Id == ReceiverAccountId);
-            var oper = db.Operators.FirstOrDefault(arg => arg.Login == User.Identity.Name);
-
-            if (Amount <= 0 || sender == null || receiver == null || oper == null)
-                return new TransactionResult()
-                {
-                    Result = OperationResult.IncorrectParameters
-                };
-
-            BankId = sender.BankId;
-            LoadAccounts();
-
-            return operations.MakeTransaction(sender, receiver, Amount, oper, force);
         }
 
         public IActionResult OnGetAccountList(int bankId)
